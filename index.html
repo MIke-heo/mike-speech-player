@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-ver="v3-words"><head><meta charset="utf-8">
+<html lang="zh-CN" data-ver="v3-words2"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b0d11">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -51,10 +51,12 @@ h2.sec{font-size:12px;color:var(--blue);margin:16px 0 4px;padding-bottom:4px;
  font-size:12.5px;line-height:1.5;color:#e8eef9;display:none}
 #pop .pw{font-weight:700;font-size:14px;color:var(--blue);word-break:break-word}
 #pop .pm{margin-top:4px;color:#cfd8e6;white-space:pre-wrap}
-#pop .pb{margin-top:8px;display:inline-flex;align-items:center;gap:6px;background:#243149;
- border:1px solid #3d4f6e;color:#e8eef9;border-radius:8px;padding:5px 11px;font-size:12px;
- cursor:pointer;touch-action:manipulation}
-#pop .pb:active{background:#2f4059}
+#pop .pb{margin-top:9px;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+ background:#243149;border:1px solid #3d4f6e;color:#e8eef9;border-radius:9px;
+ padding:8px 14px;font-size:12.5px;min-height:36px;cursor:pointer;touch-action:manipulation;
+ -webkit-tap-highlight-color:transparent;width:100%}
+#pop .pb:hover{background:#2d3d57;border-color:#51709c}
+#pop .pb:active{background:#34496a}
 @media (max-width:420px){
  .en{font-size:14.5px}.cn,.ipa,.xy{font-size:12px}
  .row{padding:9px 0}.num{width:16px;flex:0 0 16px}
@@ -369,7 +371,16 @@ function showPop(el) {
   el.classList.add('wh');
 }
 
+var hideTimer = null;
+
+function scheduleHide() {
+  clearTimeout(hideTimer);
+  hideTimer = setTimeout(hidePop, 300);
+}
+
 function hidePop() {
+  clearTimeout(hideTimer);
+  if (pop.matches && pop.matches(':hover')) return;   // pointer is on the card
   pop.style.display = 'none';
   var h = document.querySelectorAll('.w.wh');
   for (var i = 0; i < h.length; i++) h[i].classList.remove('wh');
@@ -379,18 +390,22 @@ pop.addEventListener('click', function (e) {
   e.stopPropagation();
   if (e.target.id === 'popPlay') speak(pop.dataset.w);
 });
+// keep the card alive while the pointer travels from the word onto the card
+pop.addEventListener('mouseenter', function () { clearTimeout(hideTimer); });
+pop.addEventListener('mouseleave', scheduleHide);
+
 document.addEventListener('click', function (e) {
   if (!pop.contains(e.target)) hidePop();
 });
 document.addEventListener('mouseover', function (e) {
   var t = e.target;
-  if (t && t.classList && t.classList.contains('w')) showPop(t);
+  if (t && t.classList && t.classList.contains('w')) { clearTimeout(hideTimer); showPop(t); }
 });
 document.addEventListener('mouseout', function (e) {
   var t = e.target;
-  if (t && t.classList && t.classList.contains('w')) hidePop();
+  if (t && t.classList && t.classList.contains('w')) scheduleHide();
 });
-window.addEventListener('scroll', hidePop, {passive: true});
+window.addEventListener('scroll', function () { clearTimeout(hideTimer); hidePop(); }, {passive: true});
 
 var lpTimer = null;
 document.addEventListener('touchstart', function (e) {
